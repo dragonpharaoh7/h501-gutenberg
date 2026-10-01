@@ -38,3 +38,21 @@ def load_metadata():
 def load_languages():
     """Return the languages table, one row per book and language."""
     return _read("gutenberg_languages.csv")
+
+
+def language_counts():
+    """Count the distinct languages each author's books appear in.
+
+    Returns one row per gutenberg_author_id with a languages column.
+    The language values come from the languages table rather than from
+    metadata.language, because metadata stores composites such as
+    "de/en" that would otherwise be counted as a single language.
+    """
+    books = load_metadata()[["gutenberg_id", "gutenberg_author_id"]]
+    languages = load_languages()[["gutenberg_id", "language"]]
+    return (
+        books.merge(languages, on="gutenberg_id")
+        .groupby("gutenberg_author_id")["language"]
+        .nunique()
+        .reset_index(name="languages")
+    )
